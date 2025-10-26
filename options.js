@@ -3,6 +3,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const siteTimeInput = document.getElementById('site-time');
     const addButton = document.getElementById('add-button');
     const sitesList = document.getElementById('sites-list');
+    const sitesUsageList = document.getElementById('sites-usage');
+
+    function getTodayDateString() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
 
     // Load sites from storage and display them
     function loadSites() {
@@ -18,6 +27,37 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    // Load usage stats and display them
+    function loadUsageStats() {
+        const today = getTodayDateString();
+
+        chrome.storage.sync.get({ sites: [] }, (syncData) => {
+            const sites = syncData.sites;
+            if (sites.length === 0) {
+                sitesUsageList.innerHTML = '<li>没有需要统计的网站。</li>';
+                return;
+            }
+
+            chrome.storage.local.get({ usageData: {} }, (localData) => {
+                const usage = localData.usageData[today] || {};
+                sitesUsageList.innerHTML = ''; // Clear previous stats
+
+                sites.forEach(site => {
+                    const allowedTime = site.time * 60; // seconds
+                    const usedTime = usage[site.url] || 0; // seconds
+                    const remainingTime = Math.max(0, allowedTime - usedTime);
+                    const remainingMinutes = Math.floor(remainingTime / 60);
+
+                    const listItem = document.createElement('li');
+                    // Use a simple span for the content, as we don't need buttons here.
+                    listItem.innerHTML = `<span>${site.url} - 剩余 ${remainingMinutes} 分钟</span>`;
+                    sitesUsageList.appendChild(listItem);
+                });
+            });
+        });
+    }
+
 
     // Add a new site
     addButton.addEventListener('click', () => {
@@ -37,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     siteUrlInput.value = '';
                     siteTimeInput.value = '';
                     loadSites();
+                    loadUsageStats();
                 });
             });
         } else {
@@ -51,11 +92,15 @@ document.addEventListener('DOMContentLoaded', () => {
             chrome.storage.sync.get({ sites: [] }, (data) => {
                 const sites = data.sites;
                 sites.splice(index, 1);
-                chrome.storage.sync.set({ sites }, loadSites);
+                chrome.storage.sync.set({ sites }, () => {
+                    loadSites();
+                    loadUsageStats();
+                });
             });
         }
     });
 
     // Initial load
     loadSites();
+    loadUsageStats();
 });
