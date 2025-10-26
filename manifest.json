@@ -1,0 +1,32 @@
+{
+    "manifest_version": 3,
+    "name": "Block Time",
+    "version": "1.0",
+    "description": "一个帮助你限制在某些网站上花费时间的插件。",
+    "permissions": [
+        "storage",
+        "tabs",
+        "scripting",
+        "alarms"
+    ],
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "action": {
+        "default_popup": "options.html",
+        "default_icon": {
+            "16": "icon16.png",
+            "48": "icon48.png",
+            "128": "icon128.png"
+        }
+    },
+    "options_page": "options.html",
+    "icons": {
+        "16": "icon16.png",
+        "48": "icon48.png",
+        "128": "icon128.png"
+    }
+}
